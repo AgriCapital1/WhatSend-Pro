@@ -117,8 +117,8 @@ function App(){
  if(route.startsWith("/team"))return user?<TeamPortal user={user} onLogout={logout}/>:<><TeamLogin onAuth={setUser}/></>;
  if(user)return <Dashboard user={user} onLogout={logout}/>;
  if(route==="/login"||route==="/signup"||route==="/auth/callback")return <AuthGate mode={route==="/signup"?"signup":authMode} onAuth={setUser}/>;
+ if(!publicRoutes.includes(route))return <AuthGate mode="login" onAuth={setUser}/>;
  return <Landing onAuth={m=>{setAuthMode(m);go(m==="signup"?"/signup":"/login")}}/>;
-}
 
 function TeamLogin({onAuth}){const[email,setEmail]=useState("admin@whatsendpro.app"),[password,setPassword]=useState(""),[error,setError]=useState(""),[loading,setLoading]=useState(false);const submit=async e=>{e.preventDefault();setError("");setLoading(true);const r=await supabase.auth.signInWithPassword({email:email.trim().toLowerCase(),password});setLoading(false);if(r.error)return setError("Identifiants incorrects ou accès équipe non autorisé.");onAuth(r.data.user)};return <div className="teamAuthPage"><div className="teamAuthCard"><Logo large/><span className="teamLabel">ESPACE ÉQUIPE · ACCÈS PRIVÉ</span><h1>Administration WhatSend Pro</h1><p>Cette interface est réservée à l’équipe interne.</p><form onSubmit={submit}><label>E-mail<input value={email} onChange={e=>setEmail(e.target.value)} type="email" required/></label><label>Mot de passe<input value={password} onChange={e=>setPassword(e.target.value)} type="password" required/></label>{error&&<div className="formError">{error}</div>}<button className="primary full" disabled={loading}>{loading?"Connexion…":"Accéder à l’administration"}</button></form><button className="teamBack" onClick={()=>go("/")}>← Retour au site public</button></div></div>}
 
