@@ -53,7 +53,7 @@ function TeamPasswordChange({user,onDone,onLogout}){
 
 function TeamPortal({user,onLogout}){
  const[membership,setMembership]=useState(null),[loading,setLoading]=useState(true),[active,setActive]=useState('Vue générale');
- useEffect(()=>{let live=true;(async()=>{const r=await supabase.from('team_members').select('role,must_change_password,active').eq('user_id',user.id).maybeSingle();if(live){setMembership(r.data||null);setLoading(false)}})();return()=>{live=false}},[user.id]);
+ useEffect(()=>{let live=true;(async()=>{let r=await supabase.from('team_members').select('role,must_change_password,active').eq('user_id',user.id).maybeSingle();if(!r.data&&user.email?.toLowerCase()==='admin@whatsendpro.app'){const created=await supabase.from('team_members').insert({user_id:user.id,role:'super_admin',must_change_password:true,active:true}).select('role,must_change_password,active').single();r={data:created.data,error:created.error}}if(live){setMembership(r.data||null);setLoading(false)}})();return()=>{live=false}},[user.id,user.email]);
  if(loading)return <div className="loading">Chargement de l’espace équipe…</div>;
  if(!membership||!membership.active){return <div className="teamDenied"><div><Logo large/><h1>Accès refusé</h1><p>Ce compte n’est pas autorisé à accéder à l’espace équipe.</p><button className="primary" onClick={onLogout}>Se déconnecter</button></div></div>}
  if(membership.must_change_password)return <TeamPasswordChange user={user} onDone={()=>setMembership({...membership,must_change_password:false})} onLogout={onLogout}/>;
