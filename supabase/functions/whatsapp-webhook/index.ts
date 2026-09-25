@@ -5,7 +5,7 @@ Deno.serve(async(req)=>{
  try{
   if(req.method==="GET"){const u=new URL(req.url);const mode=u.searchParams.get("hub.mode");const token=u.searchParams.get("hub.verify_token");const challenge=u.searchParams.get("hub.challenge");if(mode==="subscribe"&&token&&token===Deno.env.get("META_VERIFY_TOKEN"))return new Response(challenge||"",{status:200});return new Response("Forbidden",{status:403})}
   if(req.method!=="POST")return new Response("Method Not Allowed",{status:405});
-  const body=await req.json();const serviceKey=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")||Deno.env.get("SUPABASE_SECRET_KEY");const supabaseUrl=Deno.env.get("SUPABASE_URL");
+  const body=await req.json();const secretKeys=Deno.env.get("SUPABASE_SECRET_KEYS");let serviceKey=Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")||Deno.env.get("SUPABASE_SECRET_KEY");if(!serviceKey&&secretKeys){try{serviceKey=JSON.parse(secretKeys)?.default||null}catch{serviceKey=null}}const supabaseUrl=Deno.env.get("SUPABASE_URL");
   if(!serviceKey||!supabaseUrl){console.error("Missing server Supabase key");return json({received:true,persisted:false})}
   const admin=createClient(supabaseUrl,serviceKey,{auth:{persistSession:false,autoRefreshToken:false}});
   for(const entry of body?.entry||[])for(const change of entry?.changes||[]){const value=change?.value||{};const phoneNumberId=value?.metadata?.phone_number_id;if(!phoneNumberId)continue;const accountRes=await admin.from("whatsapp_accounts").select("id,user_id").eq("phone_number_id",phoneNumberId).maybeSingle();const account=accountRes.data;if(!account)continue;
